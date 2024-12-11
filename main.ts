@@ -1,4 +1,4 @@
-import { Plugin, WorkspaceLeaf, Notice } from "obsidian";
+import { Plugin, Notice, WorkspaceLeaf } from "obsidian";
 
 export default class IframeReloaderPlugin extends Plugin {
   async onload() {
@@ -25,7 +25,7 @@ export default class IframeReloaderPlugin extends Plugin {
       return;
     }
 
-    // 모든 iframe 요소 가져오기
+    // 현재 노트의 모든 iframe 요소 가져오기
     const iframes = document.querySelectorAll("iframe");
 
     if (iframes.length === 0) {
@@ -34,11 +34,11 @@ export default class IframeReloaderPlugin extends Plugin {
     }
 
     if (iframes.length === 1) {
-      // iframe이 하나인 경우 바로 리로드
+      // iframe이 하나만 있을 경우 즉시 리로드
       const iframe = iframes[0];
       const src = iframe.getAttribute("src");
       if (src) {
-        iframe.setAttribute("src", src);
+        iframe.setAttribute("src", src); // 리로드
         new Notice("Iframe reloaded successfully.");
       } else {
         new Notice("Iframe found but no src attribute present.");
@@ -46,7 +46,7 @@ export default class IframeReloaderPlugin extends Plugin {
       return;
     }
 
-    // iframe이 여러 개인 경우 사용자 선택
+    // iframe이 여러 개인 경우 사용자에게 선택 메뉴 표시
     const options = Array.from(iframes).map((iframe, index) => {
       const src = iframe.getAttribute("src") || "No src";
       return `Iframe ${index + 1}: ${src}`;
@@ -67,11 +67,11 @@ export default class IframeReloaderPlugin extends Plugin {
       return;
     }
 
-    // 선택된 iframe 리로드
+    // 선택한 iframe 리로드
     const selectedIframe = iframes[selectedIndex];
     const selectedSrc = selectedIframe.getAttribute("src");
     if (selectedSrc) {
-      selectedIframe.setAttribute("src", selectedSrc);
+      selectedIframe.setAttribute("src", selectedSrc); // 리로드
       new Notice(`Iframe ${selectedIndex + 1} reloaded successfully.`);
     } else {
       new Notice(`Iframe ${selectedIndex + 1} has no src attribute.`);
