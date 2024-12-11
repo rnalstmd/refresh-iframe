@@ -25,7 +25,7 @@ export default class IframeReloaderPlugin extends Plugin {
       return;
     }
 
-    // 현재 노트의 모든 iframe 요소 가져오기
+    // 현재 노트에서 모든 iframe 요소 가져오기
     const iframes = document.querySelectorAll("iframe");
 
     if (iframes.length === 0) {
@@ -34,7 +34,7 @@ export default class IframeReloaderPlugin extends Plugin {
     }
 
     if (iframes.length === 1) {
-      // iframe이 하나만 있을 경우 즉시 리로드
+      // iframe이 하나만 있는 경우 즉시 리로드
       const iframe = iframes[0];
       const src = iframe.getAttribute("src");
       if (src) {
@@ -46,12 +46,13 @@ export default class IframeReloaderPlugin extends Plugin {
       return;
     }
 
-    // iframe이 여러 개인 경우 사용자에게 선택 메뉴 표시
+    // iframe이 여러 개인 경우 사용자에게 선택 목록 표시
     const options = Array.from(iframes).map((iframe, index) => {
       const src = iframe.getAttribute("src") || "No src";
-      return `Iframe ${index + 1}: ${src}`;
+      return `${index + 1}: ${src}`;
     });
 
+    // 사용자에게 프롬프트로 선택을 요청
     const userChoice = prompt(
       `Select an iframe to reload:\n\n${options.join("\n")}\n\nEnter the number (1-${iframes.length}):`
     );
@@ -62,12 +63,14 @@ export default class IframeReloaderPlugin extends Plugin {
     }
 
     const selectedIndex = parseInt(userChoice, 10) - 1;
+
+    // 입력값이 유효한지 확인
     if (isNaN(selectedIndex) || selectedIndex < 0 || selectedIndex >= iframes.length) {
-      new Notice("Invalid selection.");
+      new Notice("Invalid selection. Please enter a valid number.");
       return;
     }
 
-    // 선택한 iframe 리로드
+    // 선택된 iframe 리프레시
     const selectedIframe = iframes[selectedIndex];
     const selectedSrc = selectedIframe.getAttribute("src");
     if (selectedSrc) {
