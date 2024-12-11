@@ -1,4 +1,4 @@
-import { Plugin, Notice, WorkspaceLeaf } from "obsidian";
+import { Plugin, Notice, Modal, Setting } from "obsidian";
 
 export default class IframeReloaderPlugin extends Plugin {
   async onload() {
@@ -6,6 +6,7 @@ export default class IframeReloaderPlugin extends Plugin {
 
     // 리본 아이콘 추가
     this.addRibbonIcon("refresh-cw", "Reload iframe", () => {
+      console.log("Ribbon button clicked!");
       this.reloadIframe();
     });
 
@@ -18,15 +19,10 @@ export default class IframeReloaderPlugin extends Plugin {
   }
 
   reloadIframe() {
-    const leaf: WorkspaceLeaf = this.app.workspace.activeLeaf;
-
-    if (!leaf) {
-      new Notice("No active note found.");
-      return;
-    }
-
-    // 현재 노트에서 모든 iframe 요소 가져오기
+    console.log("Reloading iframes...");
+    // 모든 iframe 요소 가져오기
     const iframes = document.querySelectorAll("iframe");
+    console.log("Found iframes:", iframes);
 
     if (iframes.length === 0) {
       new Notice("No iframe found in the current note.");
@@ -34,7 +30,7 @@ export default class IframeReloaderPlugin extends Plugin {
     }
 
     if (iframes.length === 1) {
-      // iframe이 하나만 있는 경우 즉시 리로드
+      // iframe이 하나일 경우 즉시 리로드
       const iframe = iframes[0];
       const src = iframe.getAttribute("src");
       if (src) {
@@ -46,42 +42,53 @@ export default class IframeReloaderPlugin extends Plugin {
       return;
     }
 
-    // iframe이 여러 개인 경우 사용자에게 선택 목록 표시
-    const options = Array.from(iframes).map((iframe, index) => {
-      const src = iframe.getAttribute("src") || "No src";
-      return `${index + 1}: ${src}`;
-    });
-
-    // 사용자에게 프롬프트로 선택을 요청
-    const userChoice = prompt(
-      `Select an iframe to reload:\n\n${options.join("\n")}\n\nEnter the number (1-${iframes.length}):`
-    );
-
-    if (!userChoice) {
-      new Notice("Iframe reload canceled.");
-      return;
-    }
-
-    const selectedIndex = parseInt(userChoice, 10) - 1;
-
-    // 입력값이 유효한지 확인
-    if (isNaN(selectedIndex) || selectedIndex < 0 || selectedIndex >= iframes.length) {
-      new Notice("Invalid selection. Please enter a valid number.");
-      return;
-    }
-
-    // 선택된 iframe 리프레시
-    const selectedIframe = iframes[selectedIndex];
-    const selectedSrc = selectedIframe.getAttribute("src");
-    if (selectedSrc) {
-      selectedIframe.setAttribute("src", selectedSrc); // 리로드
-      new Notice(`Iframe ${selectedIndex + 1} reloaded successfully.`);
-    } else {
-      new Notice(`Iframe ${selectedIndex + 1} has no src attribute.`);
-    }
+    // 여러 iframe이 있는 경우 Modal로 선택창 표시
+    new IframeSelectorModal(this.app, iframes).open();
   }
 
   onunload() {
     console.log("Iframe Reloader Plugin unloaded");
+  }
+}
+
+class IframeSelectorModal extends Modal {
+  iframes: NodeListOf<HTMLIFrameElement>;
+
+  constructor(app: any, iframes: NodeListOf<HTMLIFrameElement>) {
+    super(app);
+    this.iframes = iframes;
+  }
+
+  onOpen() {
+    const { contentEl } = this;
+
+    contentEl.createEl("h2", { text: "Select an iframe to reload" });
+
+    // 각 iframe에 대해 버튼 추가
+    this.iframes.forEach((iframe, index) => {
+      const src = iframe.getAttribute("src") || "No src";
+      new Setting(contentEl)
+        .setName(`Iframe ${index + 1}`)
+        .setDesc(src)
+        .addButton((btn) =>
+          btn
+            .setButtonText("Reload")
+            .onClick(() => {
+              const src = iframe.getAttribute("src");
+              if (src) {
+                iframe.setAttribute("src", src);
+                new Notice(`Iframe ${index + 1} reloaded successfully.`);
+              } else {
+                new Notice(`Iframe ${index + 1} has no src attribute.`);
+              }
+              this.close();
+            })
+        );
+    });
+  }
+
+  onClose() {
+    const { contentEl } = this;
+    contentEl.empty();
   }
 }
