@@ -1,0 +1,44 @@
+name: Build Obsidian Plugin
+
+on:
+  push:
+    branches:
+      - main # main 브랜치로 푸시될 때 빌드 실행
+  pull_request:
+    branches:
+      - main # main 브랜치에 대한 PR에서 빌드 실행
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. 코드 체크아웃
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # 2. Node.js 설치
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16 # Node.js 버전 지정
+
+      # 3. 종속성 설치
+      - name: Install dependencies
+        run: npm install
+
+      # 4. TypeScript 빌드 실행
+      - name: Build plugin
+        run: npm run build
+
+      # 5. dist 폴더 결과물 커밋
+      - name: Commit built files
+        run: |
+          git config --local user.name "GitHub Actions"
+          git config --local user.email "actions@github.com"
+          git add dist
+          git commit -m "Build plugin [skip ci]" || echo "No changes to commit"
+      - name: Push changes
+        uses: ad-m/github-push-action@v0.6.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
